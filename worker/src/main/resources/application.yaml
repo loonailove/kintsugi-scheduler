@@ -1,3 +1,14 @@
+server:
+  port: 8081
+
 spring:
   application:
     name: worker
+
+kintsugi:
+  coordinator:
+    base-url: ${COORDINATOR_URL:http://localhost:8080}
+  worker:
+    id: ${WORKER_ID:worker-1}
+  heartbeat:
+    interval-ms: 2000

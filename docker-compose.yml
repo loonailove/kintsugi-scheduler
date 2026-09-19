@@ -9,7 +9,9 @@ services:
       - "5432:5432"
 
   coordinator:
-    build: ./coordinator
+    build:
+      context: ./coordinator
+      dockerfile: Dockerfile
     ports:
       - "8080:8080"
     environment:
@@ -20,7 +22,9 @@ services:
       - postgres
 
   worker:
-    build: ./worker
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
     environment:
       COORDINATION_URL: http://coordinator:8080
     depends_on:
