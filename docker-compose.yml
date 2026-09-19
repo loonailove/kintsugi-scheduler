@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:latest
+    image: postgres:16
     environment:
       POSTGRES_DB: kintsugi_db
       POSTGRES_USER: user
@@ -26,6 +26,6 @@ services:
       context: ./worker
       dockerfile: Dockerfile
     environment:
-      COORDINATION_URL: http://coordinator:8080
+      COORDINATOR_URL: http://coordinator:8080
     depends_on:
       - coordinator
