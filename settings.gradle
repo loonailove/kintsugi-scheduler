@@ -1,0 +1,2 @@
+rootProject.name = 'kintsugi-scheduler'
+include 'common', 'coordinator', 'worker'
