@@ -1,8 +1,5 @@
 # Decisions - Kintsugi
 
-Living document. Update this when a decision changes; don't argue the
-same thing twice in Slack/chat once it's written here.
-
 ## Stack
 - Language: Java 17
 - Framework: Spring Boot 4.1.1
