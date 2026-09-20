@@ -13,6 +13,21 @@ jobs:
     defaults:
       run:
         working-directory: ./coordinator
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: kintsugi_db
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - uses: actions/checkout@v4
 
@@ -27,6 +42,10 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build and Test
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/kintsugi_db
+          SPRING_DATASOURCE_USERNAME: user
+          SPRING_DATASOURCE_PASSWORD: password
         run: ./gradlew build
 
   build-worker:
@@ -52,12 +71,11 @@ jobs:
         run: ./gradlew build
 
   verify-docker:
-     name: Verify Docker Compose Build
-     runs-on: ubuntu-latest
-     needs: [build-coordinator, build-worker]  # only runs if both builds pass
-     steps:
-       - uses: actions/checkout@v4
+    name: Verify Docker Compose Build
+    runs-on: ubuntu-latest
+    needs: [build-coordinator, build-worker]  # only runs if both builds pass
+    steps:
+      - uses: actions/checkout@v4
 
-       - name: Test Docker Compose Build
-         run: docker compose build
-
+      - name: Test Docker Compose Build
+        run: docker compose build
