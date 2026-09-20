@@ -1,11 +1,22 @@
 # Kintsugi
 
-A DAG-aware distributed job scheduler with a live chaos-injection dashboard.
+[![CI](https://github.com/loonailove/kintsugi-scheduler/actions/workflows/ci.yml/badge.svg)](https://github.com/loonailove/kintsugi-scheduler/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+### A DAG-aware distributed job scheduler with a live chaos-injection dashboard.
 
 > _Kintsugi: the Japanese art of repairing broken pottery with gold, making
 > the breakage part of the object's history rather than something to hide._
 > Fitting for a system whose whole point is watching it break: a worker
 > dies, a job fails, a dependent gets held, and repair itself on camera.
+
+## Status
+
+Coordinator and worker exist as separate Spring Boot apps with
+a working Postgres connection; retries, DAG scheduling, and the dashboard
+are still ahead. See [`docs/DECISIONS.md`](./docs/DECISIONS.md) for the
+locked-in architecture and [`docs/BUGS.md`](./docs/BUGS.md) for what's
+broken and been fixed so far.
 
 ## Architecture
 
@@ -14,8 +25,8 @@ A DAG-aware distributed job scheduler with a live chaos-injection dashboard.
    Client  ─────────────────────▶  Coordinator  ◀───────────────────▶  Worker(s)
                                         │
                                         ├── PostgreSQL (source of truth for job state)
-                                        ├── dependency graph  (Wave 4)
-                                        └── metrics ──────────────────▶ Dashboard (Lanterna, Wave 5-6)
+                                        ├── dependency graph
+                                        └── metrics ──────────────────▶ Dashboard (Lanterna, later)
                                         │
                                         ▼
                                   Dead-Letter Queue
@@ -28,12 +39,24 @@ A DAG-aware distributed job scheduler with a live chaos-injection dashboard.
   success/failure, sends heartbeats.
 - **`coordinator` and `worker` are independent Spring Boot apps**, each
   with its own Gradle build. They share no code, only the REST contract
-  documented in `DECISIONS.md`. Changing the `Job` shape or an endpoint
-  means updating both sides in the same PR.
+  documented in `docs/DECISIONS.md`. Changing the `Job` shape or an
+  endpoint means updating both sides in the same PR.
+
+## Project layout
+
+```
+kintsugi-scheduler/
+├── coordinator/        Spring Boot app - job queue, Postgres, dependency graph
+├── worker/             Spring Boot app - claims jobs, executes, acks
+├── docs/               DECISIONS.md, BUGS.md
+├── .github/            CONTRIBUTING.md, PR/issue templates, CI
+├── README.md
+└── docker-compose.yml
+```
 
 ## How to run it
 
-**Via Docker Compose** (recommended — starts Postgres, coordinator, and worker together):
+**Via Docker Compose** (recommended: starts Postgres, coordinator, and worker together):
 
 ```bash
 docker compose up --build
@@ -49,22 +72,41 @@ Postgres running separately with a `kintsugi_db` database):
 cd coordinator && ./gradlew bootRun
 cd worker && ./gradlew bootRun
 ```
-## Exit test (Wave 0)
 
+## Exit test
 Start the coordinator, then the worker. The worker should reach the
 coordinator's handshake endpoint successfully. Nothing functional beyond
-that yet, this only proves the two services can talk before real job
+that yet; this only proves the two services can talk before real job
 logic gets built on top.
 
 ## Design decisions & trade-offs
 
-See [`DECISIONS.md`](./DECISIONS.md) for the full rationale, including:
+See [`docs/DECISIONS.md`](./docs/DECISIONS.md) for the full rationale, including:
 
 - Two independent Spring Boot apps, no shared module, and how the `Job`
-  contract stays in sync without one
-- PostgreSQL via Docker Compose, never H2, including in tests
+  contract stays in sync without one;
+- PostgreSQL via Docker Compose, never H2, including in tests;
 - The atomic claim query (`FOR UPDATE SKIP LOCKED`) that prevents two
-  workers from ever claiming the same job
+  workers from ever claiming the same job;
+
+## Roadmap
+
+- [x] Coordinator + worker skeleton, Postgres connected
+- [ ] Atomic job claiming (`FOR UPDATE SKIP LOCKED`)
+- [ ] Retries, backoff, dead-letter queue
+- [ ] DAG-based job dependencies
+- [ ] Live chaos-injection dashboard
+
+## Bugs & incidents
+
+See [`docs/BUGS.md`](./docs/BUGS.md); every non-trivial failure hit while
+building this, with root cause and fix. This is where "what's the hardest
+bug you hit" gets answered from, directly.
+
+## Contributing
+
+See [`.github/CONTRIBUTING.md`](./.github/CONTRIBUTING.md) for branch
+naming, commit conventions (Conventional Commits), and the PR checklist.
 
 ## License
 
