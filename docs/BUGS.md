@@ -40,6 +40,28 @@ Initializr, covers `.gradle` and `build/`); `worker/` never got one.
 **Fix:** copied `coordinator/.gitignore` to `worker/.gitignore`, then
 `git rm -r --cached worker/.gradle`.
 
+___
+
+## 2026-09-20 — CI failed with HibernateException, dialect detection
+
+**Expected:** `./gradlew build` passes in CI the same way it does locally
+via `docker compose up`.
+
+**Actual:** `contextLoads()` failed in GitHub Actions with
+`org.hibernate.HibernateException` at `DialectFactoryImpl`, even though
+the same test passed against Docker Compose's Postgres.
+
+**Root cause:** Hibernate needs a live JDBC connection to detect the
+database dialect. CI's `build-coordinator` job ran `./gradlew build` with
+no Postgres reachable at all; Docker Compose provides one locally, but
+nothing did in the GitHub Actions runner.
+
+**Fix:** added a `postgres:16` service container to the `build-coordinator`
+job in `ci.yml`, with a health check, and set `SPRING_DATASOURCE_URL` /
+`_USERNAME` / `_PASSWORD` as env vars on the build step directly, this
+bypasses `application.yaml`'s own defaults so the CI credentials don't
+need to match them.
+
 <!-- Template for the next entry:
 
 ## YYYY-MM-DD — Short title
