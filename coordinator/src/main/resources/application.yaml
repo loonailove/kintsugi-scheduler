@@ -5,7 +5,7 @@ spring:
   application:
     name: coordinator
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:5432/kintsugi
+    url: jdbc:postgresql://postgres:5432/kintsugi_db
     username: ${DB_USER:kintsugi}
     password: ${DB_PASSWORD:kintsugi}
     driver-class-name: org.postgresql.Driver
